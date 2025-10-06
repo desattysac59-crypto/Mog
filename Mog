@@ -1,0 +1,92 @@
+from flask import Flask, request, jsonify
+import base64
+import json
+import datetime
+import os
+import requests
+
+app = Flask(__name__)
+
+# Твой Telegram бот для уведомлений
+TELEGRAM_BOT_TOKEN = "8422712012:AAFPoXa2PTXfRmr78Ya-lK5gaTmlSP8aCWk"
+TELEGRAM_CHAT_ID = "8013195957"
+
+def send_telegram_alert(visitor_data):
+    """Отправка уведомления в Telegram"""
+    try:
+        message = f"""
+🔍 НОВЫЙ ВХОД
+🕐 Время: {visitor_data.get('time', 'N/A')}
+🌐 IP: {visitor_data.get('ip', 'N/A')}
+💻 Платформа: {visitor_data.get('platform', 'N/A')}
+🖥️ Экран: {visitor_data.get('screen', 'N/A')}
+🌍 Языки: {visitor_data.get('languages', 'N/A')}
+🕒 Часовой пояс: {visitor_data.get('timezone', 'N/A')}
+        """
+        
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        data = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+        
+        requests.post(url, json=data, timeout=10)
+    except Exception as e:
+        print(f"Telegram error: {e}")
+
+@app.route('/track', methods=['GET', 'POST'])
+def track_visitor():
+    """Основной endpoint для отслеживания"""
+    try:
+        if request.method == 'GET':
+            encoded_data = request.args.get('data', '')
+        else:
+            encoded_data = request.form.get('info', '')
+        
+        if encoded_data:
+            # Декодируем данные
+            decoded_data = base64.b64decode(encoded_data).decode('utf-8')
+            visitor_info = json.loads(decoded_data)
+            
+            # Логируем в консоль
+            print("=" * 50)
+            print(f"НОВЫЙ ПОСЕТИТЕЛЬ:")
+            for key, value in visitor_info.items():
+                print(f"{key}: {value}")
+            print("=" * 50)
+            
+            # Сохраняем в файл
+            with open('visitors_log.txt', 'a', encoding='utf-8') as f:
+                f.write(f"\n{datetime.datetime.now()} - {visitor_info}\n")
+            
+            # Отправляем в Telegram
+            send_telegram_alert(visitor_info)
+            
+    except Exception as e:
+        print(f"Tracking error: {e}")
+    
+    # Возвращаем пустой пиксель чтобы не вызывать подозрений
+    response = app.response_class(
+        response=base64.b64decode(b'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'),
+        status=200,
+        mimetype='image/gif'
+    )
+    return response
+
+@app.route('/logs')
+def view_logs():
+    """Просмотр логов (только для тебя)"""
+    try:
+        with open('visitors_log.txt', 'r', encoding='utf-8') as f:
+            logs = f.read()
+        return f'<pre>{logs}</pre>'
+    except:
+        return 'Логов пока нет'
+
+@app.route('/')
+def home():
+    return 'Система активна'
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000) когда создаёшь файл что здесь надо изменять?
